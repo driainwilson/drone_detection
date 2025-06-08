@@ -108,7 +108,7 @@ All settings can be controlled via the [config file](config/config.yaml).
 python drone_detection/main.py
 ```
 
-Setting cahn be controlled via the command line. 
+Setting can be controlled via the command line. 
 e.g. to select a different video file
 
 ```python

@@ -104,11 +104,17 @@ pip install -e .
 
 All settings can be controlled via the [config file](config/config.yaml). 
 
+By default the settings file assumes videos are in [data/videos](data/videos) (this will be empty after a fresh clone). This can be change via the `grabber.parameters.video_root_dir` 
+
+Either add your video to that folder and set them in the config file `grabber.parameters.video_path` relative to that folder, or use absolute filename. 
+
+Note: `grabber.parameters.video_path` be a list, the script will loop through the videos.
+
 ```python
 python drone_detection/main.py
 ```
 
-Setting can be controlled via the command line. 
+Alternatively, settings can be controlled via the command line. 
 e.g. to select a different video file
 
 ```python
@@ -116,5 +122,5 @@ python drone_detection/main.py grabber.parameters.video_path=<your_video_file>
 ```
 
 Note - if you use a relative path for `<your_vide_file>` the script will first search for file in `grabber.parameters.video_root_dir`. 
-If it cannot find a match it assumes it is absolute
+If it cannot find a match it assumes it is relative to where you are running the script from.
 

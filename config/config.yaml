@@ -4,12 +4,8 @@ grabber:
   type: VIDEO
   parameters:
     video_root_dir: data/videos/ # if relative it is to the repo root
-    video_path: /home/iain/remote/drone_detection/data/videos
-#    video_path: # if relative, it is to the video_root_dir
-#      - "V_DRONE_001.mp4"
-#      - "V_DRONE_052.mp4"
-#      - "V_DRONE_100.mp4"
-#      - "V_DRONE_111.mp4"
+    video_path: # if relative, it is to the video_root_dir
+      - "V_DRONE_001.mp4"
 
 writer:
   enabled: False

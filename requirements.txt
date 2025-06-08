@@ -1,0 +1,10 @@
+hydra-core>=1.3
+opencv-python>=4.10
+loguru>=0.6
+filterpy>=1.4.5
+
+# Object detection
+ultralytics>=8.3.149
+
+pytest
+deep_sort_realtime

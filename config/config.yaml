@@ -1,0 +1,60 @@
+grabber:
+  type: VIDEO
+  parameters:
+#    video_path: /home/iain/remote/drone_detection/data/videos
+    video_path:
+      - "V_DRONE_001.mp4"
+      - "V_DRONE_052.mp4"
+      - "V_DRONE_100.mp4"
+      - "V_DRONE_111.mp4"
+
+
+detector:
+  type: YOLO
+  parameters:
+    model_path: "yolov11s_640_best.pt"
+    confidence_threshold: 0.3
+
+# configuration for the tracker
+tracker:
+  type: YOLO
+  age_threshold: 10 # remove track after this many missed frames
+  parameters:
+    model_path: "yolov11s_640_best.pt"
+    track_kwargs:
+      state_history_max_length: 15  # max length of state history to keep
+      estimator_Q: 10.0 # process noise
+      estimator_R: 10.0 # measurement noise
+
+classifier:
+  min_track_length: 10 # minimum length of track to classify behaviour
+  types:
+    - name: Hovering
+      threshold: 1.5
+    - name: Attacking
+      threshold: 1.5
+      steepness: 2.0
+    - name: Retreating
+      threshold: 1.5
+      steepness: 2.0
+    - name: Travelling
+      threshold: 1.5
+      steepness: 2.0
+      direction_sigma: 15
+    - name: Evading
+      threshold: 1.5
+      steepness: 2.0
+      direction_sigma: 15
+  threat_score:
+      attacking_weight: 0.50
+      proximity_weight: 0.75
+      approach_velocity_weight: 0.25
+
+      proximity_threshold: 1000 # px^2 - an area considered "close"
+      approach_threshold: 5 # px/sec - considered "fast approach"
+
+# stopping hydra from creating a directory for each run
+hydra:
+  output_subdir: null
+  run:
+    dir: .

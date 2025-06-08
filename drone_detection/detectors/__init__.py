@@ -43,7 +43,7 @@ class BaseDetector(ABC):
         ...
 
 
-from .dl_object_detector import *
+from .yolo_detector import *
 
 DETECTOR_FACTORY: dict[DetectorType, Any] = {
     DetectorType.YOLO: DetectorYOLO
@@ -51,6 +51,22 @@ DETECTOR_FACTORY: dict[DetectorType, Any] = {
 
 
 def create(cfg: DictConfig) -> BaseDetector:
+    """
+    Creates a detector instance based on the provided configuration.
+
+    Args:
+       cfg: A DictConfig object containing the detector configuration.
+            It must have a 'type' field specifying the detector type,
+            and a 'parameters' field containing the detector-specific parameters.
+
+    Returns:
+       A BaseDetector instance of the specified type, initialized with the given parameters.
+
+    Raises:
+       ValueError: If the configuration does not contain a 'type' field,
+                   if the specified detector type is unknown, or if the detector
+                   type is not found in the detector factory.
+   """
     if "type" not in cfg:
         raise ValueError("detector config must have a type")
 

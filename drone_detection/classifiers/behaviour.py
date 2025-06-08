@@ -29,8 +29,8 @@ def _circular_std_dev(rads: list[float]) -> float:
 
 
 def hovering(features: dict[str, Any], threshold: float) -> float:
-    # Hovering: Most likely at zero speed and zero z-velocity.
-    return _gaussian_score(features["avg_speed"], 0, threshold) * _gaussian_score(abs(features["avg_vz"]), 0, threshold)
+    # Hovering: Most likely at zero speed
+    return _gaussian_score(features["avg_speed"], 0, threshold)
 
 
 def attacking(features: dict[str, Any], threshold: float, steepness: float) -> float:

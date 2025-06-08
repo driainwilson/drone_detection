@@ -1,11 +1,9 @@
 import pathlib
 
 import cv2
-import pytest
 from omegaconf import DictConfig
 
-from drone_detection.detectors import create, DetectorType
-from drone_detection.detectors.dl_object_detector import DetectorYOLO
+from drone_detection.detectors import create, DetectorType, DetectorYOLO
 
 
 def test_detector_factory():

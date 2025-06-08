@@ -1,13 +1,19 @@
+# Application Global settings
+
 grabber:
   type: VIDEO
   parameters:
-#    video_path: /home/iain/remote/drone_detection/data/videos
-    video_path:
-      - "V_DRONE_001.mp4"
-      - "V_DRONE_052.mp4"
-      - "V_DRONE_100.mp4"
-      - "V_DRONE_111.mp4"
+    video_root_dir: data/videos/ # if relative it is to the repo root
+    video_path: /home/iain/remote/drone_detection/data/videos
+#    video_path: # if relative, it is to the video_root_dir
+#      - "V_DRONE_001.mp4"
+#      - "V_DRONE_052.mp4"
+#      - "V_DRONE_100.mp4"
+#      - "V_DRONE_111.mp4"
 
+writer:
+  enabled: False
+  filename: test.mp4
 
 detector:
   type: YOLO
@@ -26,11 +32,12 @@ tracker:
       estimator_Q: 10.0 # process noise
       estimator_R: 10.0 # measurement noise
 
+
 classifier:
   min_track_length: 10 # minimum length of track to classify behaviour
   types:
     - name: Hovering
-      threshold: 1.5
+      threshold: 2.5
     - name: Attacking
       threshold: 1.5
       steepness: 2.0
@@ -45,13 +52,13 @@ classifier:
       threshold: 1.5
       steepness: 2.0
       direction_sigma: 15
+
   threat_score:
       attacking_weight: 0.50
-      proximity_weight: 0.75
+      proximity_weight: 0.50
       approach_velocity_weight: 0.25
-
       proximity_threshold: 1000 # px^2 - an area considered "close"
-      approach_threshold: 5 # px/sec - considered "fast approach"
+      approach_threshold: 10 # px/sec - considered "fast approach"
 
 # stopping hydra from creating a directory for each run
 hydra:

@@ -1,11 +1,12 @@
 import abc
 import enum
 from abc import ABC
-from typing import Any
+from typing import Any, Iterable
 import numpy as np
 from numpy import typing as npt
 from omegaconf import DictConfig
 from loguru import logger
+from .video_writer import *
 
 class GrabberType(enum.Enum):
     VIDEO = "VIDEO"
@@ -29,7 +30,22 @@ GRABBER_FACTORY: dict[GrabberType, Any] = {
     GrabberType.VIDEO: VideoGrabber
 }
 
-def create(cfg: DictConfig) -> BaseGrabber:
+def create(cfg: DictConfig) -> Iterable[npt.NDArray[np.uint8]]:
+    """
+     Creates a grabber based on the provided configuration.
+
+     Args:
+         cfg: A DictConfig object containing the grabber configuration.  Must have a 'type' field.
+              The parameters for the grabber are passed in the parameters field.
+
+     Returns:
+         An iterable of numpy arrays, each representing a frame from the grabber.
+
+     Raises:
+         ValueError: If the configuration does not contain a 'type' field,
+                     if the specified grabber type is unknown, or if the grabber
+                     type is not found in the grabber factory.
+     """
     if "type" not in cfg:
         raise ValueError("Grabber config must have a type")
 

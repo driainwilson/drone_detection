@@ -35,7 +35,7 @@ def draw_track(image: np.ndarray,
                velocity_xy: tuple[float, float] | None = None,
                direction_radians: float | None = None,
                color=(0, 255, 0),
-               thickness=2) -> np.ndarray:
+               thickness=1) -> np.ndarray:
     """
     Draws a detection bounding box, velocity vector, and direction indicator on an image.
 
@@ -54,8 +54,8 @@ def draw_track(image: np.ndarray,
     x1, y1, x2, y2 = np.rint(bbox_xyxy).astype(int)
     cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
 
-    label = f"Id: {track_id}"
-    cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, thickness)
+    label = f"[{track_id}]"
+    cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, thickness, lineType=cv2.LINE_AA)
 
     # Draw velocity vector
     if velocity_xy is not None:
@@ -77,7 +77,56 @@ def draw_track(image: np.ndarray,
     return image
 
 
-def draw_classification(image: np.ndarray, classifications: dict[str, float], color=(0, 255, 0), thickness=1):
+def draw_classification(image: np.ndarray, bbox_xyxy: tuple[int, ...], classifications: dict[str, float],
+                        color=(0, 255, 0), thickness=1):
+    """
+    Draws a dictionary of classifications as horizontal bars, with length proportional to probability.
+
+    Args:
+        image: The image to draw on.
+        bbox_xyxy: Bounding box coordinates (xmin, ymin, xmax, ymax).
+        classifications: A dictionary of classifications and probabilities.
+        color: The color of the bars.
+        thickness: The thickness of the bar lines.
+
+    Returns:
+        The image with the classifications drawn on it.
+    """
+
+    xmin, ymin, xmax, ymax = bbox_xyxy
+    x = int(xmax) + 5  # Right edge of the bbox, with a 5-pixel padding
+    y = int(ymin)
+    dy = 9 # Vertical space between lines
+    bar_height = 4  # Height of the bar
+    max_bar_length = 50  # Maximum length of the bar (pixels)
+    font_size = 0.3
+    for class_name, probability in classifications.items():
+        label = f"{class_name[0]}"
+        # Get the width of the text label
+        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_size, thickness)[0]
+        text_width = text_size[0]
+
+        # Position the text
+        text_x = x
+        text_y = y + bar_height  # Align text with the top of the bar
+        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_size, color, thickness,
+                    lineType=cv2.LINE_AA)
+
+        # Calculate bar length based on probability
+        bar_length = int(probability * max_bar_length)
+
+        # Draw the bar to the right of the text
+        bar_start = (text_x + text_width + 5, y)  # 5 pixels spacing between text and bar
+        bar_end = (text_x + text_width + 5 + bar_length, y + bar_height)
+        cv2.rectangle(image, bar_start, bar_end, color, thickness=cv2.FILLED)
+
+        # Increment y for the next bar, including bar height and spacing
+        y += dy
+
+    return image
+
+def draw_classification_old(image: np.ndarray, bbox_xyxy: tuple[int, ...], classifications: dict[str, float],
+                        color=(0, 255, 0), thickness=1):
     """
     Draws a dictionary of classifications and probabilities at the top right of the image.
 
@@ -90,15 +139,17 @@ def draw_classification(image: np.ndarray, classifications: dict[str, float], co
     Returns:
         The image with the classifications drawn on it.
     """
-    x = image.shape[1] - 10  # Right edge of the image, with a 10-pixel padding
-    y = 20  # Top of the image, with a 20-pixel padding
-    dy = 20  # Vertical space between lines
+
+    xmin, ymin, xmax, ymax = bbox_xyxy
+    x = int(xmax) + 5  # Right edge of the bbox, with a 5-pixel padding
+    y = int(ymin)
+    dy = 10  # Vertical space between lines
 
     for class_name, probability in classifications.items():
         label = f"{class_name}: {probability:.2f}"
-        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, thickness)[0]
-        text_x = x - text_size[0]  # Right-align the text
-        cv2.putText(image, label, (text_x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, thickness,  lineType=cv2.LINE_AA)
+        # text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, thickness)[0]
+        # text_x = x - text_size[0]  # Right-align the text
+        cv2.putText(image, label, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, thickness, lineType=cv2.LINE_AA)
         y += dy
 
     return image
@@ -129,78 +180,80 @@ def draw_state(image: np.ndarray, state: dict[str, float], color=(255, 0, 0), th
     return image
 
 
-def draw_threat_score(
+def draw_threat_scores(
     image: npt.NDArray[np.uint8],
-    score: float,
+    scores: dict[int, float],
     font_scale: float = 0.5,
     thickness: int = 1,
 ) -> npt.NDArray[np.uint8]:
     """
-    Draws a threat score in a colored box at the top-left of an image.
+    Draws multiple threat scores in colored boxes at the top-left of an image, stacked vertically.
     The box color scales from green to red based on the score, and the text is white.
 
     Args:
         image (np.ndarray): The input image (OpenCV format, BGR).
-        score (int): The threat score, an integer from 0 to 100.
+        scores (dict[str, float]): A dictionary of threat scores, where keys are labels and values are scores (0-100).
         font_scale (float): The scale of the font.
         thickness (int): The thickness of the font.
 
     Returns:
-        np.ndarray: The image with the threat score box drawn on it.
+        np.ndarray: The image with the threat score boxes drawn on it.
     """
-    # 1. Validate the score
-    # Clamp the score to be within the 0-100 range to avoid errors.
-    score = max(0, min(100, score))
-
-    # 2. Calculate the box color
-    # We interpolate between green and red in the BGR color space.
-    # Green is (0, 255, 0) and Red is (0, 0, 255) in BGR.
-    normalized_score = score / 100.0
-    red_value = int(255 * normalized_score)
-    green_value = int(255 * (1 - normalized_score))
-    box_color = (0, green_value, red_value)
-    text_color = (255, 255, 255) # White color for the text
-
-    # 3. Prepare the text and calculate box size
-    text = f"Threat Score: {int(round(score))}"
     font = cv2.FONT_HERSHEY_SIMPLEX
-    margin = 10 # Margin from the image borders
-    padding = 10 # Padding inside the box
+    margin = 10  # Margin from the image borders
+    padding = 10  # Padding inside the box
+    y_offset = margin  # Initial Y offset for the first box
 
-    (text_width, text_height), baseline = cv2.getTextSize(
-        text, font, font_scale, thickness
-    )
+    for label, score in scores.items():
+        # 1. Validate the score
+        score = max(0, min(100, score))
 
-    # 4. Define box and text positions
-    # Box top-left corner
-    box_tl = (margin, margin)
-    # Box bottom-right corner
-    box_br = (
-        margin + text_width + padding * 2,
-        margin + text_height + padding * 2,
-    )
-    # Text bottom-left corner (inside the box)
-    text_bl = (margin + padding, margin + text_height + padding)
+        # 2. Calculate the box color
+        normalized_score = score / 100.0
+        red_value = int(255 * normalized_score)
+        green_value = int(255 * (1 - normalized_score))
+        box_color = (0, green_value, red_value)
+        text_color = (255, 255, 255)  # White color for the text
 
+        # 3. Prepare the text and calculate box size
+        text = f"[{label}] Threat Score: {int(round(score))}"
 
-    # 5. Draw the filled box and the text
-    cv2.rectangle(
-        img=image,
-        pt1=box_tl,
-        pt2=box_br,
-        color=box_color,
-        thickness=2 # Use FILLED for a solid box
-    )
+        (text_width, text_height), baseline = cv2.getTextSize(
+            text, font, font_scale, thickness
+        )
 
-    cv2.putText(
-        img=image,
-        text=text,
-        org=text_bl,
-        fontFace=font,
-        fontScale=font_scale,
-        color=text_color,
-        thickness=thickness,
-        lineType=cv2.LINE_AA,
-    )
+        # 4. Define box and text positions
+        # Box top-left corner
+        box_tl = (margin, y_offset)
+        # Box bottom-right corner
+        box_br = (
+            margin + text_width + padding * 2,
+            y_offset + text_height + padding * 2,
+        )
+        # Text bottom-left corner (inside the box)
+        text_bl = (margin + padding, y_offset + text_height + padding)
+
+        # 5. Draw the filled box and the text
+        cv2.rectangle(
+            img=image,
+            pt1=box_tl,
+            pt2=box_br,
+            color=box_color,
+            thickness=2,  # Use FILLED for a solid box
+        )
+
+        cv2.putText(
+            img=image,
+            text=text,
+            org=text_bl,
+            fontFace=font,
+            fontScale=font_scale,
+            color=text_color,
+            thickness=1,
+            lineType=cv2.LINE_AA,
+        )
+
+        # Update the Y offset for the next box
+        y_offset = box_br[1] + margin  # Add margin between boxes
 
     return image

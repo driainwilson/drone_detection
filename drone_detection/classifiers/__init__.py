@@ -4,7 +4,7 @@ from typing import Callable
 
 from omegaconf import DictConfig
 
-from .prob import *
+from .behaviour import *
 
 
 class ClassifierType(enum.Enum):
@@ -31,7 +31,7 @@ def _behaviour_classifier(classifiers: dict[str, Callable], state_history: list[
     for name, classifier in classifiers.items():
         scores[name] = classifier(features)
 
-    # --- Normalize scores to get a probability distribution ---
+    # normalise scores
     total_score = sum(scores.values())
     if total_score < 1e-9:
         return {b: 0.0 for b in classifiers.keys()}
@@ -65,12 +65,22 @@ def _threat_score_calculator(state: dict[str, Any],
 
 
 def create(cfg: DictConfig) -> tuple[Callable, Callable]:
-    # create classifiers
+    """
+       Creates and configures behaviour classifier and threat score calculator functions.
+
+       Args:
+           cfg: A DictConfig containing the configuration for the classifiers and threat score.
+
+       Returns:
+           A tuple containing the behaviour classifier and the threat score calculator functions.
+       """
+
     classifiers = {}
     for classifier in cfg.types:
         name = classifier.name
         if classifier.name not in ClassifierType.__members__:
             raise ValueError(f"Unknown classifier type: {classifier.name}")
+
         classifier_type = ClassifierType[classifier.name]
         params = dict(classifier)
         params.pop("name")

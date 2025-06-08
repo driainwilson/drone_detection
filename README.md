@@ -124,3 +124,8 @@ python drone_detection/main.py grabber.parameters.video_path=<your_video_file>
 Note - if you use a relative path for `<your_vide_file>` the script will first search for file in `grabber.parameters.video_root_dir`. 
 If it cannot find a match it assumes it is relative to where you are running the script from.
 
+
+
+### Demo
+
+A demo video can be found [here](data/demo.mp4)
